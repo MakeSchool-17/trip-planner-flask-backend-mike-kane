@@ -37,7 +37,7 @@ class Trip(Resource):
     def put(self, trip_id):
         updated_trip = request.json
         trip_collection = app.db.trips
-        result = trip_collection.update_one(trip_id, updated_trip)
+        result = trip_collection.update_one({"_id": ObjectId(trip_id)}, {"$set": updated_trip})
         if result.modified_count == 0:
             response = jsonify(data=[])
             response.status_code = 404
@@ -47,7 +47,7 @@ class Trip(Resource):
 
     def delete(self, trip_id):
         trip_collection = app.db.trips
-        result = trip_collection.delete_one(trip_id)
+        result = trip_collection.delete_one({'_id': ObjectId(trip_id)})
         if result.deleted_count == 0:
             response = jsonify(data=[])
             response.status_code = 404
