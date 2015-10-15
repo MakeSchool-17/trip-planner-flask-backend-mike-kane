@@ -82,8 +82,8 @@ class User(Resource):
 
 
 # Add REST resource to API
-api.add_resource(Trip, '/trip/', '/trip/<string:trip_id>')
-api.add_resource(User, '/user/', '/user/<string:user_id>')
+api.add_resource(Trip, '/trips/', '/trips/<string:trip_id>')
+api.add_resource(User, '/users/', '/users/<string:user_id>')
 
 
 # provide a custom JSON serializer for flasks_restful

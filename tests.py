@@ -22,7 +22,7 @@ class FlaskrTestCase(unittest.TestCase):
     # MyObject tests
 
     def test_posting_trip(self):
-        response = self.app.post('/trip/',
+        response = self.app.post('/trips/',
                                  data=json.dumps(dict(name="A sample trip")),
                                  content_type='application/json')
 
@@ -33,41 +33,41 @@ class FlaskrTestCase(unittest.TestCase):
         assert 'A sample trip' in responseJSON["name"]
 
     def test_getting_trip(self):
-        response = self.app.post('/trip/',
+        response = self.app.post('/trips/',
                                  data=json.dumps(dict(name="Another trip")),
                                  content_type='application/json')
 
         postResponseJSON = json.loads(response.data.decode())
         postedTripID = postResponseJSON["_id"]
 
-        response = self.app.get('/trip/'+postedTripID)
+        response = self.app.get('/trips/'+postedTripID)
         responseJSON = json.loads(response.data.decode())
 
         self.assertEqual(response.status_code, 200)
         assert 'Another trip' in responseJSON["name"]
 
     def test_getting_non_existent_trip(self):
-        response = self.app.get('/trip/55f0cbb4236f44b7f0e3cb23')
+        response = self.app.get('/trips/55f0cbb4236f44b7f0e3cb23')
         self.assertEqual(response.status_code, 404)
 
     def test_updating_trip(self):
-        response = self.app.post('/trip/', data=json.dumps(dict(name='another trip')), content_type='application/json')
+        response = self.app.post('/trips/', data=json.dumps(dict(name='another trip')), content_type='application/json')
         postResponseJSON = json.loads(response.data.decode())
         postedTripID = postResponseJSON['_id']
 
-        response = self.app.put('/trip/'+postedTripID, data=json.dumps(dict(name='spring break')), content_type='application/json')
+        response = self.app.put('/trips/'+postedTripID, data=json.dumps(dict(name='spring break')), content_type='application/json')
         responseJSON = json.loads(response.data.decode())
 
         self.assertEqual(response.status_code, 200)
         assert 'spring break' in responseJSON['name']
 
     def test_deleting_trip(self):
-        response = self.app.post('/trip/', data=json.dumps(dict(name='delete this trip!')), content_type='application/json')
+        response = self.app.post('/trips/', data=json.dumps(dict(name='delete this trip!')), content_type='application/json')
         postResponseJSON = json.loads(response.data.decode())
         postedTripID = postResponseJSON['_id']
 
-        response = self.app.delete('/trip/'+postedTripID)
-        response = self.app.get('/trip/'+postedTripID)
+        response = self.app.delete('/trips/'+postedTripID)
+        response = self.app.get('/trips/'+postedTripID)
         self.assertEqual(response.status_code, 404)
 
 if __name__ == '__main__':
