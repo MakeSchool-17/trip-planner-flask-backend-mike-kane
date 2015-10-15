@@ -55,7 +55,7 @@ class FlaskrTestCase(unittest.TestCase):
         postResponseJSON = json.loads(response.data.decode())
         postedTripID = postResponseJSON['_id']
 
-        response = self.app.put('/trip/'+postedTripID, data=json.dumps(dict(name='spring break')))
+        response = self.app.put('/trip/'+postedTripID, data=json.dumps(dict(name='spring break')), content_type='application/json')
         responseJSON = json.loads(response.data.decode())
 
         self.assertEqual(response.status_code, 200)
