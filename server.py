@@ -3,6 +3,8 @@ from flask_restful import Resource, Api
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 from utils.mongo_json_encoder import JSONEncoder
+from functools import wraps
+import bcrypt
 
 # Basic Setup
 app = Flask(__name__)
@@ -11,9 +13,35 @@ app.db = mongo.develop_database
 api = Api(app)
 
 
+def check_auth(username, password):
+    user_collection = app.db.users
+    user = user_collection.find_one({'username': username})
+    db_hashed_password = user['password']
+    user_hashed_password = bcrypt.hashpw(password, bcrypt.gensalt(12))
+    if bcrypt.hashpw(db_hashed_password, password) == user_hashed_password:
+        return True
+    else:
+        return False
+
+
+def requires_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.authorization
+        if not auth or not check_auth(auth.username, auth.password):
+            message = {'error': 'Basic Auth Required.'}
+            resp = jsonify(message)
+            resp.status_code = 401
+            return resp
+
+        return f(*args, **kwargs)
+    return decorated
+
+
 # Implement REST Resource
 class Trip(Resource):
 
+    @requires_auth
     def post(self):
         new_trip = request.json
         trip_collection = app.db.trips
@@ -28,7 +56,7 @@ class Trip(Resource):
         trip = trip_collection.find_one({"_id": ObjectId(trip_id)})
 
         if trip is None:
-            response = jsonify(data=[])  # why do I need to jsonify the data?
+            response = jsonify(data=[])
             response.status_code = 404
             return response
         else:
@@ -62,6 +90,12 @@ class User(Resource):
 
     def post(self):   # check if correct
         new_user = request.json
+
+        app.bcrypt_rounds = 12
+        encodedPassword = new_user['password'].encode('utf-8')
+        hashed_password = bcrypt.hashpw(encodedPassword, bcrypt.gensalt(app.bcrypt_rounds))
+        new_user['password'] = hashed_password
+
         user_collection = app.db.users
         result = user_collection.insert_one(new_user)
 
@@ -69,6 +103,7 @@ class User(Resource):
 
         return user
 
+    @requires_auth
     def get(self, user_id):   # check if correct
         user_collection = app.db.users
         user = user_collection.find_one({"_id": ObjectId(user_id)})
