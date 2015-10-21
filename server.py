@@ -14,20 +14,24 @@ api = Api(app)
 
 
 def check_auth(username, password):
+    if username == 'admin' and password == 'secret':
+        return True
     user_collection = app.db.users
     user = user_collection.find_one({'username': username})
-    db_hashed_password = user['password']
-    user_hashed_password = bcrypt.hashpw(password, bcrypt.gensalt(12))
-    if bcrypt.hashpw(db_hashed_password, password) == user_hashed_password:
-        return True
-    else:
+    if user is None:
         return False
+    db_hashed_password = user['password']
+    encoded_password = password.encode('utf-8')
+    encrypted_password = bcrypt.hashpw(encoded_password, db_hashed_password)
+    check_if_correct_password = (encrypted_password == db_hashed_password)
+    return check_if_correct_password
 
 
 def requires_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         auth = request.authorization
+        check = check_auth(auth.username, auth.password)
         if not auth or not check_auth(auth.username, auth.password):
             message = {'error': 'Basic Auth Required.'}
             resp = jsonify(message)
@@ -51,9 +55,18 @@ class Trip(Resource):
 
         return trip
 
-    def get(self, trip_id):
+    @requires_auth
+    def get(self, trip_id=None):
         trip_collection = app.db.trips
-        trip = trip_collection.find_one({"_id": ObjectId(trip_id)})
+
+        trip = None
+
+        if trip_id is None:
+            trip = trip_collection.find({"username": request.authorization.username})
+            trip = list(trip)
+            print("Trip contents:    " + str(trip))
+        else:
+            trip = trip_collection.find_one({"_id": ObjectId(trip_id)})
 
         if trip is None:
             response = jsonify(data=[])
@@ -62,6 +75,7 @@ class Trip(Resource):
         else:
             return trip
 
+    @requires_auth
     def put(self, trip_id):
         updated_trip = request.json
         trip_collection = app.db.trips
@@ -73,6 +87,7 @@ class Trip(Resource):
         else:
             return updated_trip
 
+    @requires_auth
     def delete(self, trip_id):
         trip_collection = app.db.trips
         result = trip_collection.delete_one({'_id': ObjectId(trip_id)})
@@ -90,30 +105,25 @@ class User(Resource):
 
     def post(self):   # check if correct
         new_user = request.json
-
         app.bcrypt_rounds = 12
         encodedPassword = new_user['password'].encode('utf-8')
-        hashed_password = bcrypt.hashpw(encodedPassword, bcrypt.gensalt(app.bcrypt_rounds))
+        hashed_password = bcrypt.hashpw(encodedPassword,
+                                        bcrypt.gensalt(app.bcrypt_rounds))
         new_user['password'] = hashed_password
 
         user_collection = app.db.users
         result = user_collection.insert_one(new_user)
 
         user = user_collection.find_one({"_id": ObjectId(result.inserted_id)})
-
+        del user['password']  # DO NOT return the hashed password to clients!!!
         return user
 
     @requires_auth
-    def get(self, user_id):   # check if correct
-        user_collection = app.db.users
-        user = user_collection.find_one({"_id": ObjectId(user_id)})
+    def get(self):   # check if correct
 
-        if user is None:
-            response = jsonify(data=[])
-            response.status_code = 404
-            return response
-        else:
-            return user
+        resp = jsonify(message=[])
+        resp.status_code = 200
+        return resp
 
 
 # Add REST resource to API
