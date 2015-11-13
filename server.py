@@ -42,7 +42,7 @@ def requires_auth(f):
     return decorated
 
 
-# Implement REST Resources
+# Implement REST Resource
 class Trip(Resource):
 
     @requires_auth
