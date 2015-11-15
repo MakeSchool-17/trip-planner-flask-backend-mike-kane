@@ -31,7 +31,7 @@ def requires_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         auth = request.authorization
-        check = check_auth(auth.username, auth.password)
+        # check = check_auth(auth.username, auth.password)
         if not auth or not check_auth(auth.username, auth.password):
             message = {'error': 'Basic Auth Required.'}
             resp = jsonify(message)
@@ -62,9 +62,9 @@ class Trip(Resource):
         trip = None
 
         if trip_id is None:
-            trip = trip_collection.find({"username": request.authorization.username})
+            trip = trip_collection.find({"username":
+                                        request.authorization.username})
             trip = list(trip)
-            print("Trip contents:    " + str(trip))
         else:
             trip = trip_collection.find_one({"_id": ObjectId(trip_id)})
 
@@ -79,7 +79,8 @@ class Trip(Resource):
     def put(self, trip_id):
         updated_trip = request.json
         trip_collection = app.db.trips
-        result = trip_collection.update_one({"_id": ObjectId(trip_id)}, {"$set": updated_trip})
+        result = trip_collection.update_one({"_id": ObjectId(trip_id)},
+                                            {"$set": updated_trip})
         if result.modified_count == 0:
             response = jsonify(data=[])
             response.status_code = 404

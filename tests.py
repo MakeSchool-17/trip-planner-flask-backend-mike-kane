@@ -7,7 +7,8 @@ import base64
 
 def make_auth_header(username='admin', password='secret'):
     user_credentials = '{0}:{1}'.format(username, password)
-    encoded_cred = base64.b64encode(user_credentials.encode('utf-8')).decode('utf-8')
+    encoded_cred = base64.b64encode(user_credentials.encode('utf-8')).decode(
+        'utf-8')
     auth_header = {'Authorization': 'Basic ' + encoded_cred}
     return auth_header
 
@@ -57,30 +58,33 @@ class FlaskrTestCase(unittest.TestCase):
         postResponseJSON = json.loads(response.data.decode())
         postedTripID = postResponseJSON["_id"]
 
-        response = self.app.get('/trips/'+postedTripID, headers=make_auth_header())
+        response = self.app.get('/trips/'+postedTripID,
+                                headers=make_auth_header())
         responseJSON = json.loads(response.data.decode())
 
         self.assertEqual(response.status_code, 200)
         assert 'Another trip' in responseJSON["name"]
 
     def test_getting_non_existent_trip(self):
-        response = self.app.get('/trips/55f0cbb4236f44b7f0e3cb23', headers=make_auth_header())
+        response = self.app.get('/trips/55f0cbb4236f44b7f0e3cb23',
+                                headers=make_auth_header())
         self.assertEqual(response.status_code, 404)
 
     def test_getting_all_trips(self):
         response = self.app.post('/trips/',
-                                 data=json.dumps(dict(name="First trip", username="admin")),
+                                 data=json.dumps(dict(name="First trip",
+                                                      username="admin")),
                                  content_type='application/json',
                                  headers=make_auth_header())
 
         response = self.app.post('/trips/',
-                                 data=json.dumps(dict(name="Another trip", username="admin")),
+                                 data=json.dumps(dict(name="Another trip",
+                                                 username="admin")),
                                  content_type='application/json',
                                  headers=make_auth_header())
 
         response = self.app.get('/trips/', headers=make_auth_header())
         responseJSON = json.loads(response.data.decode())
-
 
         self.assertEqual(response.status_code, 200)
         assert 'First trip' in responseJSON[0]['name']
@@ -95,9 +99,9 @@ class FlaskrTestCase(unittest.TestCase):
         postedTripID = postResponseJSON['_id']
 
         response = self.app.put('/trips/'+postedTripID,
-                data=json.dumps(dict(name='spring break')),
-                content_type='application/json',
-                headers=make_auth_header())
+                                data=json.dumps(dict(name='spring break')),
+                                content_type='application/json',
+                                headers=make_auth_header())
         responseJSON = json.loads(response.data.decode())
 
         self.assertEqual(response.status_code, 200)
@@ -105,10 +109,9 @@ class FlaskrTestCase(unittest.TestCase):
 
     def test_deleting_trip(self):
         head = make_auth_header()
-        response = self.app.post('/trips/',
-                data=json.dumps(dict(name='delete this trip!')),
-                content_type='application/json',
-                headers=head)
+        response = self.app.post('/trips/', data=json.dumps
+                                 (dict(name='delete this trip!')),
+                                 content_type='application/json', headers=head)
         postResponseJSON = json.loads(response.data.decode())
         postedTripID = postResponseJSON['_id']
 
@@ -118,8 +121,8 @@ class FlaskrTestCase(unittest.TestCase):
 
     def test_auth(self):
         response = self.app.get('/users/',
-                content_type='application/json',
-                headers=make_auth_header())
+                                content_type='application/json',
+                                headers=make_auth_header())
         # postResponseJSON = json.loads(response.data.decode())
 
         self.assertEqual(response.status_code, 200)
